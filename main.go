@@ -37,16 +37,20 @@ func main() {
 		log.Fatalf("error loading .env file: %v", err)
 	}
 
-	accounts, eur, btc, err := getAccounts()
+	accounts, fiat, crypto, err := getAccounts("EUR", "BTC")
 	if err != nil {
 		log.Fatalf("error getting accounts: %v", err)
 	}
-	fmt.Printf("Retrieved %d accounts on final page\n", accounts.Size)
-	if eur != nil {
-		fmt.Printf("Returned EUR account id=%s\n", eur.UUID)
+	if fiat != nil {
+		fmt.Printf("Returned %s account id=%s\n", fiat.Currency, fiat.UUID)
+		if fiat.AvailableBalance.Value != "0" {
+			fmt.Printf("FIAT account %s has available balance: %s\n", fiat.Currency, fiat.AvailableBalance.Value)
+		} else {
+			log.Fatalf("FIAT account %s has no available balance. Please deposit funds.\n", fiat.Currency)
+		}
 	}
-	if btc != nil {
-		fmt.Printf("Returned BTC account id=%s\n", btc.UUID)
+	if crypto != nil {
+		fmt.Printf("Returned %s account id=%s\n", crypto.Currency, crypto.UUID)
 	}
 
 }
