@@ -68,7 +68,14 @@ func main() {
 	put := math.Floor(fiatBalance / 10)
 	fmt.Printf("Calculated order size: %.2f %s\n", put, fiat.Currency)
 
+	currentBuyPrice, err := getBuyPrice(fmt.Sprintf("%s-%s", crypto.Currency, fiat.Currency))
+	if err != nil {
+		log.Fatalf("error getting buy price: %v", err)
+	}
 	for range 10 {
+		// Simulate some work
+		fmt.Printf("Put in %.2f for %.2f\n", put, currentBuyPrice)
+		currentBuyPrice = currentBuyPrice - put
 
 	}
 }
