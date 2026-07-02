@@ -80,6 +80,8 @@ func main() {
 		baseSize := put / limitPrice
 
 		fmt.Printf("Put in %.2f for %.2f\n", put, limitPrice)
+
+		// Creating order with the calculated limit price and base size and a unique client order ID using the current timestamp and the index of the order in the loop
 		order, err := createOrder(CreateOrderRequest{
 			ClientOrderID: fmt.Sprintf("order_%d_%d", time.Now().UnixNano(), i),
 			ProductID:     fmt.Sprintf("%s-%s", crypto.Currency, fiat.Currency),
