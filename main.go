@@ -74,6 +74,7 @@ func main() {
 		log.Fatalf("error getting buy price: %v", err)
 	}
 	discounts := []float64{0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.10}
+
 	for i, discount := range discounts {
 		// putting in 10 orders at a time, each with the same size, but the buy price will decrease by a percentage with each order
 		limitPrice := currentBuyPrice * (1 - discount)
@@ -98,6 +99,17 @@ func main() {
 			log.Fatalf("error creating order: %v", err)
 		}
 		fmt.Printf("Order created: %+v\n", order.SuccessResponse.OrderID)
+
+		// Store the order
+		stored := StoredOrder{
+			OrderID:       order.SuccessResponse.OrderID,
+			ClientOrderID: order.SuccessResponse.ClientOrderID,
+			ProductID:     order.SuccessResponse.ProductID,
+			Side:          order.SuccessResponse.Side,
+			Status:        "OPEN",
+		}
+
 	}
+	saveStoredOrders([]StoredOrder{stored})
 
 }
