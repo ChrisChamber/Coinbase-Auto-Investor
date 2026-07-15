@@ -35,11 +35,13 @@ func getKeySecret() string {
 	return string(b)
 }
 
-func main() {
+func loadEnv() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("error loading .env file: %v", err)
 	}
+}
 
+func getCoinbaseAccounts() (*Account, *Account, error) {
 	accounts, fiat, crypto, err := getAccounts("EUR", "BTC")
 	if err != nil {
 		log.Fatalf("error getting accounts: %v", err)
@@ -60,6 +62,10 @@ func main() {
 		log.Fatalf("No CRYPTO account found in accounts: %+v\n", accounts)
 	}
 
+	return fiat, crypto, nil
+}
+
+func calculateOrderSize(fiat *Account) (float64, error) {
 	// Dividing available balance by 10 and rounding down to 2 decimal places for the order size
 	fiatBalance, err := strconv.ParseFloat(fiat.AvailableBalance.Value, 64)
 	if err != nil {
@@ -74,6 +80,14 @@ func main() {
 		log.Fatalf("error getting buy price: %v", err)
 	}
 	discounts := []float64{0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.10}
+}
+
+func main() {
+	loadEnv()
+	fiat, crypto, err := getCoinbaseAccounts()
+	if err != nil {
+		log.Fatalf("error getting coinbase accounts: %v", err)
+	}
 
 	storedOrders, err := loadStoredOrders()
 	if err != nil {
