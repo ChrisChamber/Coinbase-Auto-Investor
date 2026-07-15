@@ -75,24 +75,10 @@ func calculateOrderSize(fiat *Account) (float64, error) {
 	put := math.Floor((usableBalance/10)*100) / 100 // round down to 2 decimal places
 	fmt.Printf("Calculated order size: %.2f %s\n", put, fiat.Currency)
 
-	currentBuyPrice, err := getBuyPrice(fmt.Sprintf("%s-%s", crypto.Currency, fiat.Currency))
-	if err != nil {
-		log.Fatalf("error getting buy price: %v", err)
-	}
-	discounts := []float64{0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.10}
+	return put, nil
 }
 
-func main() {
-	loadEnv()
-	fiat, crypto, err := getCoinbaseAccounts()
-	if err != nil {
-		log.Fatalf("error getting coinbase accounts: %v", err)
-	}
-
-	storedOrders, err := loadStoredOrders()
-	if err != nil {
-		log.Fatalf("error loading stored orders: %v", err)
-	}
+func createBatchOrders(fiat, crypto *Account, amount float64) error {
 	for i, discount := range discounts {
 		// putting in 10 orders at a time, each with the same size, but the buy price will decrease by a percentage with each order
 		limitPrice := currentBuyPrice * (1 - discount)
@@ -128,6 +114,30 @@ func main() {
 		})
 
 	}
+	return nil
+}
+
+func main() {
+	loadEnv()
+	fiat, crypto, err := getCoinbaseAccounts()
+	if err != nil {
+		log.Fatalf("error getting coinbase accounts: %v", err)
+	}
+
+	storedOrders, err := loadStoredOrders()
+	if err != nil {
+		log.Fatalf("error loading stored orders: %v", err)
+	}
+	put, err := calculateOrderSize(fiat)
+	if err != nil {
+		log.Fatalf("error calculating order size: %v", err)
+	}
+	currentBuyPrice, err := getBuyPrice(fmt.Sprintf("%s-%s", crypto.Currency, fiat.Currency))
+	if err != nil {
+		log.Fatalf("error getting buy price: %v", err)
+	}
+	discounts := []float64{0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.10}
+
 	if err := saveStoredOrders(storedOrders); err != nil {
 		log.Fatalf("error saving stored orders: %v", err)
 	}
