@@ -106,3 +106,19 @@ func refreshStoredOrders() error {
 
 	return saveStoredOrders(orders)
 }
+
+// TODO: Add a function to check if all orders are filled and return a boolean value.
+func checkIfAllOrdersFilled() (bool, error) {
+	orders, err := loadStoredOrders()
+	if err != nil {
+		refreshStoredOrders()
+		return false, err
+	} else {
+		for _, order := range orders {
+			if order.Status != "filled" {
+				return false, nil
+			}
+		}
+		return true, nil
+	}
+}
