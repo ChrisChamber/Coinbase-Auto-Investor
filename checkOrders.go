@@ -109,16 +109,42 @@ func refreshStoredOrders() error {
 
 // TODO: Add a function to check if all orders are filled and return a boolean value.
 func checkIfAllOrdersFilled() (bool, error) {
+	if err := refreshStoredOrders(); err != nil {
+		return false, err
+	}
 	orders, err := loadStoredOrders()
 	if err != nil {
-		refreshStoredOrders()
 		return false, err
-	} else {
-		for _, order := range orders {
-			if order.Status != "filled" {
-				return false, nil
-			}
+	}
+
+	// No orders does not mean all orders are filled, it means there are no orders to check
+	if len(orders) == 0 {
+		return false, nil
+	}
+	for _, order := range orders {
+		if order.Status != "filled" {
+			return false, nil
 		}
+	}
+	return true, nil
+}
+
+func canCreatenewBatchOrders() (bool, error) {
+	orders, err := loadStoredOrders()
+	if err != nil {
+		return false, err
+	}
+
+	// No previous orders so we can create new batch orders
+	if len(orders) == 0 {
 		return true, nil
 	}
+
+	// Only create new batch orders if all previous orders are filled
+	for _, order := range orders {
+		if order.Status != "filled" {
+			return false, nil
+		}
+	}
+	return true, nil
 }

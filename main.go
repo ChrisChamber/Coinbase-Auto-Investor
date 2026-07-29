@@ -40,22 +40,37 @@ func loadEnv() {
 }
 
 func checkBalanceandCreateOrders() error {
+	canCreateOrders, err := canCreatenewBatchOrders()
+	if err != nil {
+		log.Errorf("error checking if orders can be created: %v", err)
+	}
+
+	if !canCreateOrders {
+		log.Println("Orders cannot be created at this time. Please check your account balance and existing orders.")
+		return nil
+	}
+
 	fiat, crypto, err := getCoinbaseAccounts()
 	if err != nil {
 		log.Fatalf("error getting coinbase accounts: %v", err)
 	}
+
 	amount, err := calculateOrderSize(fiat)
 	if err != nil {
 		log.Fatalf("error calculating order size: %v", err)
 	}
+
 	if err := createBatchOrders(fiat, crypto, amount); err != nil {
 		log.Fatalf("error creating batch orders: %v", err)
 	}
+
 	return nil
 }
 
 func runLoop() {
-
+	if err := checkBalanceandCreateOrders(); err != nil {
+		log.Fatalf("error checking balance and creating orders: %v", err)
+	}
 	moneyTicker := time.NewTicker(24 * time.Hour)
 	orderTicker := time.NewTicker(1 * time.Hour)
 	defer moneyTicker.Stop()

@@ -56,7 +56,7 @@ func getCoinbaseAccounts() (*Account, *Account, error) {
 		if fiat.AvailableBalance.Value != "0" {
 			fmt.Printf("FIAT account %s has available balance: %s\n", fiat.Currency, fiat.AvailableBalance.Value)
 		} else {
-			log.Fatalf("FIAT account %s has no available balance. Please deposit funds.\n", fiat.Currency)
+			log.Printf("FIAT account %s has no available balance. Please deposit funds.\n", fiat.Currency)
 		}
 	} else {
 		log.Fatalf("No FIAT account found in accounts: %+v\n", accounts)
