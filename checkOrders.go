@@ -103,7 +103,7 @@ func refreshStoredOrders() error {
 		}
 
 		orders[i].Status = status
-		log.Printf("%s: %s\n", orders[i].OrderID, status)
+		log.Printf("%s: %s", orders[i].OrderID, status)
 	}
 
 	return saveStoredOrders(orders)

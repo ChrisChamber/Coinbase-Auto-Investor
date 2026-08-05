@@ -52,19 +52,19 @@ func getCoinbaseAccounts() (*Account, *Account, error) {
 		log.Fatalf("error getting accounts: %v", err)
 	}
 	if fiat != nil {
-		log.Printf("Returned %s account id=%s\n", fiat.Currency, fiat.UUID)
+		log.Printf("Returned %s account id=%s", fiat.Currency, fiat.UUID)
 		if fiat.AvailableBalance.Value != "0" {
-			log.Printf("FIAT account %s has available balance: %s\n", fiat.Currency, fiat.AvailableBalance.Value)
+			log.Printf("FIAT account %s has available balance: %s", fiat.Currency, fiat.AvailableBalance.Value)
 		} else {
-			log.Printf("FIAT account %s has no available balance. Please deposit funds.\n", fiat.Currency)
+			log.Printf("FIAT account %s has no available balance. Please deposit funds.", fiat.Currency)
 		}
 	} else {
-		log.Fatalf("No FIAT account found in accounts: %+v\n", accounts)
+		log.Fatalf("No FIAT account found in accounts: %+v", accounts)
 	}
 	if crypto != nil {
-		log.Printf("Returned %s account id=%s\n", crypto.Currency, crypto.UUID)
+		log.Printf("Returned %s account id=%s", crypto.Currency, crypto.UUID)
 	} else {
-		log.Fatalf("No CRYPTO account found in accounts: %+v\n", accounts)
+		log.Fatalf("No CRYPTO account found in accounts: %+v", accounts)
 	}
 
 	return fiat, crypto, nil
@@ -78,7 +78,7 @@ func calculateOrderSize(fiat *Account) (float64, error) {
 	}
 	usableBalance := fiatBalance * 0.97             // keep 3% buffer for fees/slippage/reserved funds
 	put := math.Floor((usableBalance/10)*100) / 100 // round down to 2 decimal places
-	log.Printf("Calculated order size: %.2f %s\n", put, fiat.Currency)
+	log.Printf("Calculated order size: %.2f %s", put, fiat.Currency)
 
 	return put, nil
 }
@@ -107,7 +107,7 @@ func createOrder(order CreateOrderRequest) (orderResponse, error) {
 		if err := json.Unmarshal(respBody, &orderResp); err != nil {
 			return orderResponse{}, fmt.Errorf("unmarshal order response: %w", err)
 		}
-		fmt.Printf("Order created successfully: %+v\n", orderResp)
+		log.Printf("Order created successfully: %+v", orderResp)
 		return orderResp, nil
 	}
 }
@@ -145,7 +145,7 @@ func createBatchOrders(fiat, crypto *Account, amount float64) error {
 		if err != nil {
 			log.Fatalf("error creating order: %v", err)
 		}
-		log.Printf("Order created: %+v\n", order.SuccessResponse.OrderID)
+		log.Printf("Order created: %+v", order.SuccessResponse.OrderID)
 
 		// accumulate the order details in the storedOrders slice to save them later
 		storedOrders = append(storedOrders, StoredOrder{
