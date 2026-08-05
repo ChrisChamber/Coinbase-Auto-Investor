@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -60,6 +59,12 @@ func checkBalanceandCreateOrders() error {
 		log.Fatalf("error calculating order size: %v", err)
 	}
 
+	if amount <= 0 {
+		log.Println("Insufficient funds to create orders.")
+		return nil
+
+	}
+
 	if err := createBatchOrders(fiat, crypto, amount); err != nil {
 		log.Fatalf("error creating batch orders: %v", err)
 	}
@@ -89,7 +94,7 @@ func runLoop() {
 			}
 
 			if ordersFilled {
-				fmt.Println("All orders are filled. Proceed with sending to wallet.")
+				log.Println("All orders are filled. Proceed with sending to wallet.")
 			}
 		}
 	}

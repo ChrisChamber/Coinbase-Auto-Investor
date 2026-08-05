@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type StoredOrder struct {
@@ -101,7 +103,7 @@ func refreshStoredOrders() error {
 		}
 
 		orders[i].Status = status
-		fmt.Printf("%s: %s\n", orders[i].OrderID, status)
+		log.Printf("%s: %s\n", orders[i].OrderID, status)
 	}
 
 	return saveStoredOrders(orders)
@@ -122,7 +124,7 @@ func checkIfAllOrdersFilled() (bool, error) {
 		return false, nil
 	}
 	for _, order := range orders {
-		if order.Status != "filled" {
+		if order.Status != "FILLED" {
 			return false, nil
 		}
 	}
@@ -130,6 +132,9 @@ func checkIfAllOrdersFilled() (bool, error) {
 }
 
 func canCreatenewBatchOrders() (bool, error) {
+	// an order could already be filled at Coinbase while its saved JSON still says OPEN
+	refreshStoredOrders()
+
 	orders, err := loadStoredOrders()
 	if err != nil {
 		return false, err
@@ -142,7 +147,7 @@ func canCreatenewBatchOrders() (bool, error) {
 
 	// Only create new batch orders if all previous orders are filled
 	for _, order := range orders {
-		if order.Status != "filled" {
+		if order.Status != "FILLED" {
 			return false, nil
 		}
 	}
