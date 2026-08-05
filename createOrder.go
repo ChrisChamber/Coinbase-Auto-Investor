@@ -127,7 +127,7 @@ func createBatchOrders(fiat, crypto *Account, amount float64) error {
 		limitPrice := currentBuyPrice * (1 - discount)
 		baseSize := amount / limitPrice
 
-		log.Printf("Put in %.2f for %.2f\n", amount, limitPrice)
+		log.Printf("Put in %.2f for %.2f", amount, limitPrice)
 
 		// Creating order with the calculated limit price and base size and a unique client order ID using the current timestamp and the index of the order in the loop
 		order, err := createOrder(CreateOrderRequest{
