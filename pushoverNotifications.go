@@ -6,15 +6,14 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
 func sendNotification(title, message string) error {
-	token := os.Getenv("PUSHOVER_TOKEN")
-	user := os.Getenv("PUSHOVER_USER")
+	token := getPushoverToken()
+	user := getPushoverUser()
 
 	if token == "" || user == "" {
 		log.Errorf("Pushover token or user key is not set. Skipping notification.")

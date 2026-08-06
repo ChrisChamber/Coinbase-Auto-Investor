@@ -17,6 +17,14 @@ func mustGetEnv(name string) string {
 	return value
 }
 
+func getPushoverToken() string {
+	return mustGetEnv("PUSHOVER_TOKEN")
+}
+
+func getPushoverUser() string {
+	return mustGetEnv("PUSHOVER_USER")
+}
+
 func getKeyName() string {
 	return mustGetEnv("COINBASE_KEY_NAME")
 }
@@ -95,6 +103,9 @@ func runLoop() {
 
 			if ordersFilled {
 				log.Println("All orders are filled. Proceed with sending to wallet.")
+				if err := sendNotification("Orders Filled", "All orders are filled successfully. Proceed with transfer."); err != nil {
+					log.Errorf("error sending notification: %v", err)
+				}
 			}
 		}
 	}
