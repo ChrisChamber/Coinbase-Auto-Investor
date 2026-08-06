@@ -157,5 +157,8 @@ func createBatchOrders(fiat, crypto *Account, amount float64) error {
 		})
 
 	}
+	if err := sendNotification("BTC Orders Created", fmt.Sprintf("%d orders created successfully.", len(discounts))); err != nil {
+		log.Errorf("error sending notification: %v", err)
+	}
 	return saveStoredOrders(storedOrders)
 }
