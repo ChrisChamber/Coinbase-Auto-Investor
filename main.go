@@ -4,8 +4,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/joho/godotenv"
-
 	log "github.com/sirupsen/logrus"
 )
 
@@ -38,12 +36,6 @@ func getKeySecret() string {
 	}
 
 	return string(b)
-}
-
-func loadEnv() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("error loading .env file: %v", err)
-	}
 }
 
 func checkBalanceandCreateOrders() error {
@@ -112,6 +104,5 @@ func runLoop() {
 }
 
 func main() {
-	loadEnv()
 	runLoop()
 }
