@@ -102,8 +102,18 @@ func refreshStoredOrders() error {
 			return fmt.Errorf("checking %s: %w", orders[i].OrderID, err)
 		}
 
+		// Log a message when an order transitions from a non-filled status to "FILLED"
+		previousStatus := orders[i].Status
 		orders[i].Status = status
-		log.Printf("%s: %s", orders[i].OrderID, status)
+
+		if previousStatus != "FILLED" && status == "FILLED" {
+			log.Infof(
+				"Order filled: id=%s product=%s side=%s",
+				orders[i].OrderID,
+				orders[i].ProductID,
+				orders[i].Side,
+			)
+		}
 	}
 
 	return saveStoredOrders(orders)
