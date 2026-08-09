@@ -5,12 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type CreateOrderRequest struct {
@@ -59,12 +58,12 @@ func getCoinbaseAccounts() (*Account, *Account, error) {
 			log.Printf("FIAT account %s has no available balance. Please deposit funds.", fiat.Currency)
 		}
 	} else {
-		log.Fatalf("No FIAT account found in accounts: %+v", accounts)
+		log.Fatalf("ERROR: No FIAT account found in accounts: %+v", accounts)
 	}
 	if crypto != nil {
 		log.Printf("Returned %s account id=%s", crypto.Currency, crypto.UUID)
 	} else {
-		log.Fatalf("No CRYPTO account found in accounts: %+v", accounts)
+		log.Fatalf("ERROR: No CRYPTO account found in accounts: %+v", accounts)
 	}
 
 	return fiat, crypto, nil
@@ -74,7 +73,7 @@ func calculateOrderSize(fiat *Account) (float64, error) {
 	// Dividing available balance by 10 and rounding down to 2 decimal places for the order size
 	fiatBalance, err := strconv.ParseFloat(fiat.AvailableBalance.Value, 64)
 	if err != nil {
-		log.Fatalf("error parsing fiat balance: %v", err)
+		log.Fatalf("ERROR: error parsing fiat balance: %v", err)
 	}
 	usableBalance := fiatBalance * 0.97             // keep 3% buffer for fees/slippage/reserved funds
 	put := math.Floor((usableBalance/10)*100) / 100 // round down to 2 decimal places
@@ -115,12 +114,12 @@ func createOrder(order CreateOrderRequest) (orderResponse, error) {
 func createBatchOrders(fiat, crypto *Account, amount float64) error {
 	currentBuyPrice, err := getBuyPrice(fmt.Sprintf("%s-%s", crypto.Currency, fiat.Currency))
 	if err != nil {
-		log.Fatalf("error getting buy price: %v", err)
+		log.Fatalf("ERROR: error getting buy price: %v", err)
 	}
 	discounts := []float64{0, 0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.045}
 	storedOrders, err := loadStoredOrders()
 	if err != nil {
-		log.Fatalf("error loading stored orders: %v", err)
+		log.Fatalf("ERROR: error loading stored orders: %v", err)
 	}
 	for i, discount := range discounts {
 		// putting in 10 orders at a time, each with the same size, but the buy price will decrease by a percentage with each order
@@ -143,7 +142,7 @@ func createBatchOrders(fiat, crypto *Account, amount float64) error {
 			},
 		})
 		if err != nil {
-			log.Fatalf("error creating order: %v", err)
+			log.Fatalf("ERROR: error creating order: %v", err)
 		}
 		log.Printf("Order created: %+v", order.SuccessResponse.OrderID)
 
@@ -158,7 +157,7 @@ func createBatchOrders(fiat, crypto *Account, amount float64) error {
 
 	}
 	if err := sendNotification("BTC Orders Created", fmt.Sprintf("%d orders created successfully.", len(discounts))); err != nil {
-		log.Errorf("error sending notification: %v", err)
+		log.Printf("ERROR: sending notification: %v", err)
 	}
 	return saveStoredOrders(storedOrders)
 }

@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func sendNotification(title, message string) error {
@@ -16,7 +15,7 @@ func sendNotification(title, message string) error {
 	user := getPushoverUser()
 
 	if token == "" || user == "" {
-		log.Errorf("Pushover token or user key is not set. Skipping notification.")
+		log.Printf("ERROR: Pushover token or user key is not set. Skipping notification.")
 		return nil
 	}
 
@@ -40,6 +39,7 @@ func sendNotification(title, message string) error {
 	body, _ := io.ReadAll(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
+		log.Printf("ERROR: Pushover returned %s: %s", resp.Status, body)
 		return fmt.Errorf("Pushover returned %s: %s", resp.Status, body)
 	}
 
@@ -50,6 +50,7 @@ func sendNotification(title, message string) error {
 		return fmt.Errorf("reading Pushover response: %w", err)
 	}
 	if result.Status != 1 {
+		log.Printf("ERROR: Pushover did not accept the message: %s", body)
 		return fmt.Errorf("Pushover did not accept the message: %s", body)
 	}
 

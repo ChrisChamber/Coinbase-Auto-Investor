@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type Account struct {
@@ -43,7 +42,7 @@ func getAccounts(FIAT, CRYPTO string) (AccountsResp, *Account, *Account, error) 
 
 	var accounts AccountsResp
 	if err := json.Unmarshal(body, &accounts); err != nil {
-		log.Fatalf("unmarshal accounts: %v", err)
+		log.Fatalf("ERROR: unmarshal accounts: %v", err)
 	}
 	var fiat, crypto *Account
 	// scan current page first
@@ -66,15 +65,15 @@ func getAccounts(FIAT, CRYPTO string) (AccountsResp, *Account, *Account, error) 
 		req.Header.Set("Accept", "application/json")
 		resp, err := (&http.Client{}).Do(req)
 		if err != nil {
-			return accounts, fiat, crypto, fmt.Errorf("error making request: %w", err)
+			return accounts, fiat, crypto, fmt.Errorf("ERROR: making request: %w", err)
 		}
 		body, err := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err != nil {
-			return accounts, fiat, crypto, fmt.Errorf("error reading response body: %w", err)
+			return accounts, fiat, crypto, fmt.Errorf("ERROR: reading response body: %w", err)
 		}
 		if err := json.Unmarshal(body, &accounts); err != nil {
-			return accounts, fiat, crypto, fmt.Errorf("unmarshal accounts: %w", err)
+			return accounts, fiat, crypto, fmt.Errorf("ERROR: unmarshal accounts: %w", err)
 		}
 
 		for i := range accounts.Accounts {

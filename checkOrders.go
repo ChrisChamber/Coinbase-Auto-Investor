@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type StoredOrder struct {
@@ -99,6 +98,7 @@ func refreshStoredOrders() error {
 	for i := range orders {
 		status, err := getOrderStatus(orders[i].OrderID)
 		if err != nil {
+			log.Printf("ERROR: checking %s: %w", orders[i].OrderID, err)
 			return fmt.Errorf("checking %s: %w", orders[i].OrderID, err)
 		}
 
@@ -107,7 +107,7 @@ func refreshStoredOrders() error {
 		orders[i].Status = status
 
 		if previousStatus != "FILLED" && status == "FILLED" {
-			log.Infof(
+			log.Printf(
 				"Order filled: id=%s product=%s side=%s",
 				orders[i].OrderID,
 				orders[i].ProductID,
