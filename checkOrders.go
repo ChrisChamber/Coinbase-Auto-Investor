@@ -143,7 +143,9 @@ func checkIfAllOrdersFilled() (bool, error) {
 
 func canCreatenewBatchOrders() (bool, error) {
 	// an order could already be filled at Coinbase while its saved JSON still says OPEN
-	refreshStoredOrders()
+	if err := refreshStoredOrders(); err != nil {
+		return false, fmt.Errorf("ERROR: refreshing stored orders: %w", err)
+	}
 
 	orders, err := loadStoredOrders()
 	if err != nil {
