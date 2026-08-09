@@ -72,10 +72,13 @@ func checkBalanceandCreateOrders() error {
 }
 
 func runLoop() {
+	// Check balance and create orders immediately on startup
 	if err := checkBalanceandCreateOrders(); err != nil {
 		log.Fatalf("ERROR: checking balance and creating orders: %v", err)
 	}
+	// Check balance and create orders every 24 hours
 	moneyTicker := time.NewTicker(24 * time.Hour)
+	// Check orders every hour and send notification if all orders are filled
 	orderTicker := time.NewTicker(1 * time.Hour)
 	defer moneyTicker.Stop()
 	defer orderTicker.Stop()
@@ -104,7 +107,7 @@ func runLoop() {
 
 func main() {
 	// append to file instead of truncating, create file if does not exist, open for writing only, give read/write permissions to owner, read permissions to group and others
-	f, err := os.OpenFile(time.Now().Format("2006-01-02")+"_CBAutoInvestor.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile("CBAutoInvestor.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
