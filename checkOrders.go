@@ -98,7 +98,7 @@ func refreshStoredOrders() error {
 	for i := range orders {
 		status, err := getOrderStatus(orders[i].OrderID)
 		if err != nil {
-			log.Printf("ERROR: checking %s: %w", orders[i].OrderID, err)
+			log.Printf("ERROR: checking %s: %v", orders[i].OrderID, err)
 			return fmt.Errorf("checking %s: %w", orders[i].OrderID, err)
 		}
 
