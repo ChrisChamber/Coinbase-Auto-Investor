@@ -1,11 +1,8 @@
 package main
 
 import (
-	"fmt"
-	"io"
 	"log"
 	"os"
-	"path/filepath"
 	"time"
 )
 
@@ -74,29 +71,6 @@ func checkBalanceandCreateOrders() error {
 	return nil
 }
 
-func createLogFile(logDirectory string) (*os.File, error) {
-	if err := os.MkdirAll(logDirectory, 0750); err != nil {
-		return nil, fmt.Errorf("creating log directory: %w", err)
-	}
-
-	logPath := filepath.Join(
-		logDirectory,
-		"bot-"+time.Now().Format("2006-01-02")+".log",
-	)
-
-	logFile, err := os.OpenFile(
-		logPath,
-		os.O_CREATE|os.O_APPEND|os.O_WRONLY,
-		0640,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("opening log file: %w", err)
-	}
-
-	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
-	return logFile, nil
-}
-
 func runLoop() {
 	if err := checkBalanceandCreateOrders(); err != nil {
 		log.Fatalf("ERROR: checking balance and creating orders: %v", err)
@@ -129,5 +103,15 @@ func runLoop() {
 }
 
 func main() {
+	// append to file instead of truncating, create file if does not exist, open for writing only, give read/write permissions to owner, read permissions to group and others
+	f, err := os.OpenFile(time.Now().Format("2006-01-02")+"_CBAutoInvestor.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// ensure the file is closed when the program exits
+	defer f.Close()
+	log.SetOutput(f)
+	// set log flags to include date, time, and file line number
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	runLoop()
 }
