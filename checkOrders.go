@@ -15,6 +15,10 @@ type StoredOrder struct {
 	ProductID     string `json:"product_id"`
 	Side          string `json:"side"`
 	Status        string `json:"status"`
+
+	//add field with base size and limit price to be able to recreate the order if it fails
+	BaseSize   string `json:"base_size"`
+	LimitPrice string `json:"limit_price"`
 }
 
 type getOrderResponse struct {

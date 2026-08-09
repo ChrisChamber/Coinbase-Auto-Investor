@@ -125,39 +125,52 @@ func createBatchOrders(fiat, crypto *Account, amount float64) error {
 		// putting in 10 orders at a time, each with the same size, but the buy price will decrease by a percentage with each order
 		limitPrice := currentBuyPrice * (1 - discount)
 		baseSize := amount / limitPrice
+		clientOrderID := fmt.Sprintf("order_%d_%d", time.Now().UnixNano(), i)
 
+		// Building order request before calling coinbase API to create the order
 		log.Printf("Put in %.2f for %.2f", amount, limitPrice)
+		storedOrder := StoredOrder{
+			ClientOrderID: clientOrderID,
+			ProductID:     fmt.Sprintf("%s-%s", crypto.Currency, fiat.Currency),
+			Side:          "BUY",
+			Status:        "PENDING_SUBMISSION",
+			BaseSize:      fmt.Sprintf("%.8f", baseSize),
+			LimitPrice:    fmt.Sprintf("%.2f", limitPrice),
+		}
+		storedOrders = append(storedOrders, storedOrder)
+
+		// Save the order immediately after creating it to ensure that we have a record of it in case of any failures
+		if err := saveStoredOrders(storedOrders); err != nil {
+			return fmt.Errorf("save pending orders: %w", err)
+		}
 
 		// Creating order with the calculated limit price and base size and a unique client order ID using the current timestamp and the index of the order in the loop
 		order, err := createOrder(CreateOrderRequest{
-			ClientOrderID: fmt.Sprintf("order_%d_%d", time.Now().UnixNano(), i),
-			ProductID:     fmt.Sprintf("%s-%s", crypto.Currency, fiat.Currency),
+			ClientOrderID: clientOrderID,
+			ProductID:     storedOrder.ProductID,
 			Side:          "BUY",
 			OrderConfiguration: OrderConfiguration{
 				LimitLimitGTC: LimitLimitGTC{
-					BaseSize:   fmt.Sprintf("%.8f", baseSize),
-					LimitPrice: fmt.Sprintf("%.2f", limitPrice),
+					BaseSize:   storedOrder.BaseSize,
+					LimitPrice: storedOrder.LimitPrice,
 					PostOnly:   false,
 				},
 			},
 		})
 		if err != nil {
-			log.Fatalf("ERROR: error creating order: %v", err)
+			return fmt.Errorf("create order: %w", err)
 		}
-		log.Printf("Order created: %+v", order.SuccessResponse.OrderID)
 
-		// accumulate the order details in the storedOrders slice to save them later
-		storedOrders = append(storedOrders, StoredOrder{
-			OrderID:       order.SuccessResponse.OrderID,
-			ClientOrderID: order.SuccessResponse.ClientOrderID,
-			ProductID:     order.SuccessResponse.ProductID,
-			Side:          order.SuccessResponse.Side,
-			Status:        "OPEN",
-		})
+		storedOrders[len(storedOrders)-1].OrderID = order.SuccessResponse.OrderID
+		storedOrders[len(storedOrders)-1].Status = "OPEN"
+		// Once order is successfully opened, we can save the order details to the storedOrders slice and persist it to the JSON file
+		if err := saveStoredOrders(storedOrders); err != nil {
+			return fmt.Errorf("save confirmed order: %w", err)
+		}
 
 	}
 	if err := sendNotification("BTC Orders Created", fmt.Sprintf("%d orders created successfully.", len(discounts))); err != nil {
 		log.Printf("ERROR: sending notification: %v", err)
 	}
-	return saveStoredOrders(storedOrders)
+	return nil
 }
