@@ -77,7 +77,7 @@ func calculateOrderSize(fiat *Account) (decimal.Decimal, error) {
 	}
 	usableBalance := fiatBalance.Mul(decimal.NewFromFloat(0.97)) // keep 3% buffer for fees/slippage/reserved funds
 	orderSize := usableBalance.Div(decimal.NewFromInt(10))       // divide by 10 to create 10 orders
-	log.Printf("Calculated order size: %.2f %s", orderSize, fiat.Currency)
+	log.Printf("Calculated order size: %s %s", orderSize.StringFixed(2), fiat.Currency)
 	// round down to 2 decimal places
 	return orderSize.Truncate(2), nil
 }
