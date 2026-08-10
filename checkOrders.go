@@ -151,25 +151,36 @@ func retryPendingOrders() error {
 		return fmt.Errorf("load stored orders: %w", err)
 	}
 
-	for _, order := range storedOrders {
-		if order.Status == "PENDING_SUBMISSION" {
-			// Retry creating the order
-			_, err := createOrder(CreateOrderRequest{
-				ClientOrderID: order.ClientOrderID,
-				ProductID:     order.ProductID,
-				Side:          order.Side,
+	for i := range storedOrders {
+		if storedOrders[i].Status == "PENDING_SUBMISSION" {
+
+			log.Printf("Retrying pending order %s", storedOrders[i].ClientOrderID)
+
+			order, err := createOrder(CreateOrderRequest{
+				ClientOrderID: storedOrders[i].ClientOrderID,
+				ProductID:     storedOrders[i].ProductID,
+				Side:          storedOrders[i].Side,
 				OrderConfiguration: OrderConfiguration{
 					LimitLimitGTC: LimitLimitGTC{
-						BaseSize:   order.BaseSize,
-						LimitPrice: order.LimitPrice,
+						BaseSize:   storedOrders[i].BaseSize,
+						LimitPrice: storedOrders[i].LimitPrice,
 						PostOnly:   false,
 					},
 				},
 			})
 			if err != nil {
-				log.Printf("ERROR: Failed to retry order %s: %v", order.ClientOrderID, err)
+				log.Printf("ERROR: Failed to retry order %s: %v", storedOrders[i].ClientOrderID, err)
+				return fmt.Errorf("retry order %s: %w", storedOrders[i].ClientOrderID, err)
 			}
+			storedOrders[i].OrderID = order.SuccessResponse.OrderID
+			storedOrders[i].Status = "OPEN"
+			// Once order is successfully opened, we can save the order details to the storedOrders slice and persist it to the JSON file
+			if err := saveStoredOrders(storedOrders); err != nil {
+				return fmt.Errorf("save pending order: %s: %w", storedOrders[i].ClientOrderID, err)
+			}
+			log.Printf("Recovered pending order %s, Coinbase order ID %s", storedOrders[i].ClientOrderID, storedOrders[i].ClientOrderID)
 		}
+
 	}
 	return nil
 }

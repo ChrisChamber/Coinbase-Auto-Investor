@@ -38,6 +38,10 @@ func getKeySecret() string {
 }
 
 func checkBalanceandCreateOrders() error {
+	// Check and retry pending orders before checking balance and creating new orders
+	if err := retryPendingOrders(); err != nil {
+		log.Fatalf("ERROR: recovering pending orders: %v", err)
+	}
 	canCreateOrders, err := canCreatenewBatchOrders()
 	if err != nil {
 		log.Printf("ERROR: checking if orders can be created: %v", err)
@@ -72,6 +76,10 @@ func checkBalanceandCreateOrders() error {
 }
 
 func runLoop() {
+	// Check and retry pending orders on startup
+	if err := retryPendingOrders(); err != nil {
+		log.Fatalf("ERROR: recovering pending orders: %v", err)
+	}
 	// Check balance and create orders immediately on startup
 	if err := checkBalanceandCreateOrders(); err != nil {
 		log.Fatalf("ERROR: checking balance and creating orders: %v", err)
