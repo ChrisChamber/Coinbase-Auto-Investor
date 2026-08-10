@@ -5,11 +5,12 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"log"
 	"math"
 	"math/big"
+	"os"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/square/go-jose/v3"
 	"github.com/square/go-jose/v3/jwt"
 )
@@ -17,6 +18,17 @@ import (
 type APIKeyClaims struct {
 	*jwt.Claims
 	URI string `json:"uri"`
+}
+
+func keySecretPemToText() string {
+	path := mustGetEnv("COINBASE_KEY_SECRET")
+
+	b, err := os.ReadFile(path)
+	if err != nil {
+		log.Fatalf("ERROR: failed to read private key file %s: %v", path, err)
+	}
+
+	return string(b)
 }
 
 func buildJWT(keyName, keySecret, uri string) (string, error) {
@@ -69,9 +81,9 @@ func (n nonceSource) Nonce() (string, error) {
 
 func getJwt(requestMethod, requestHost, requestPath string) string {
 	uri := fmt.Sprintf("%s %s%s", requestMethod, requestHost, requestPath)
-	jwt, err := buildJWT(getKeyName(), getKeySecret(), uri)
+	jwt, err := buildJWT(mustGetEnv("COINBASE_KEY_NAME"), keySecretPemToText(), uri)
 	if err != nil {
-		log.Errorf("error building jwt: %v", err)
+		log.Printf("ERROR: building jwt: %v", err)
 	}
 	return jwt
 }
