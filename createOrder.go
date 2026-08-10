@@ -92,7 +92,7 @@ func createOrder(order CreateOrderRequest) (orderResponse, error) {
 	req, _ := http.NewRequest("POST", "https://api.coinbase.com/api/v3/brokerage/orders", bytes.NewBuffer(body))
 	req.Header.Set("Authorization", "Bearer "+getJwt("POST", "api.coinbase.com", "/api/v3/brokerage/orders"))
 	req.Header.Set("Accept", "application/json")
-	resp, err := (&http.Client{}).Do(req)
+	resp, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
 	if err != nil {
 		return orderResponse{}, fmt.Errorf("send order request: %w", err)
 	}

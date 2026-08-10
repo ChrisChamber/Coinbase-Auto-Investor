@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 type StoredOrder struct {
@@ -73,7 +74,7 @@ func getOrderStatus(orderID string) (string, error) {
 		"Bearer "+getJwt(http.MethodGet, "api.coinbase.com", path),
 	)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
 	if err != nil {
 		return "", err
 	}
