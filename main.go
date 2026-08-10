@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -32,6 +33,19 @@ func checkBalanceandCreateOrders() error {
 	fiat, crypto, err := getCoinbaseAccounts()
 	if err != nil {
 		log.Fatalf("ERROR: getting coinbase accounts: %v", err)
+	}
+	// Checking if fiat balance meets the minimum required amount to create orders
+	fiatBalance, err := strconv.ParseFloat(fiat.AvailableBalance.Value, 64)
+	if err != nil {
+		log.Fatalf("ERROR: parsing fiat balance: %v", err)
+	}
+	minFiatBalance, err := strconv.ParseFloat(mustGetEnv("MIN_FIAT_BALANCE"), 64)
+	if err != nil {
+		log.Fatalf("ERROR: parsing minimum fiat balance: %v", err)
+	}
+	if fiatBalance < minFiatBalance {
+		log.Printf("Available fiat balance is below the minimum required amount of %s. Current balance: %f", mustGetEnv("MIN_FIAT_BALANCE"), fiatBalance)
+		return nil
 	}
 
 	amount, err := calculateOrderSize(fiat)
