@@ -139,7 +139,7 @@ func createBatchOrders(fiat, crypto *Account, amount decimal.Decimal) error {
 		clientOrderID := fmt.Sprintf("order_%d_%d", time.Now().UnixNano(), i)
 
 		// Building order request before calling coinbase API to create the order
-		log.Printf("Put in %.2f for %.2f", amount, limitPrice)
+		log.Printf("Put in %.s for %.s", amount.StringFixed(2), limitPrice.StringFixed(2))
 		storedOrder := StoredOrder{
 			ClientOrderID: clientOrderID,
 			ProductID:     fmt.Sprintf("%s-%s", crypto.Currency, fiat.Currency),
