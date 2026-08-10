@@ -97,18 +97,25 @@ func createOrder(order CreateOrderRequest) (orderResponse, error) {
 		return orderResponse{}, fmt.Errorf("send order request: %w", err)
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		respBody, _ := io.ReadAll(resp.Body)
-		return orderResponse{}, fmt.Errorf("create order failed: %s, body: %s", resp.Status, respBody)
-	} else {
-		respBody, _ := io.ReadAll(resp.Body)
-		var orderResp orderResponse
-		if err := json.Unmarshal(respBody, &orderResp); err != nil {
-			return orderResponse{}, fmt.Errorf("unmarshal order response: %w", err)
-		}
-		log.Printf("Order created successfully: %+v", orderResp)
-		return orderResp, nil
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return orderResponse{}, fmt.Errorf("read order response: %w", err)
 	}
+
+	if resp.StatusCode != http.StatusOK {
+		return orderResponse{}, fmt.Errorf("create order failed: %s, body: %s", resp.Status, respBody)
+	}
+
+	var orderResp orderResponse
+	if err := json.Unmarshal(respBody, &orderResp); err != nil {
+		return orderResponse{}, fmt.Errorf("unmarshal order response: %w", err)
+	}
+
+	if !orderResp.Success {
+		return orderResp, fmt.Errorf("create order failed: %s, message: %s, details: %s, preview failure reason: %s", orderResp.ErrorResponse.Error, orderResp.ErrorResponse.Message, orderResp.ErrorResponse.ErrorDetails, orderResp.ErrorResponse.PreviewFailureReason)
+	}
+	log.Printf("Order created successfully: %+v", orderResp)
+	return orderResp, nil
 }
 
 func createBatchOrders(fiat, crypto *Account, amount decimal.Decimal) error {
