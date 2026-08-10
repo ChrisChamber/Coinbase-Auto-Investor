@@ -14,29 +14,6 @@ func mustGetEnv(name string) string {
 	return value
 }
 
-func getPushoverToken() string {
-	return mustGetEnv("PUSHOVER_TOKEN")
-}
-
-func getPushoverUser() string {
-	return mustGetEnv("PUSHOVER_USER")
-}
-
-func getKeyName() string {
-	return mustGetEnv("COINBASE_KEY_NAME")
-}
-
-func getKeySecret() string {
-	path := mustGetEnv("COINBASE_KEY_SECRET")
-
-	b, err := os.ReadFile(path)
-	if err != nil {
-		log.Fatalf("ERROR: failed to read private key file %s: %v", path, err)
-	}
-
-	return string(b)
-}
-
 func checkBalanceandCreateOrders() error {
 	// Check and retry pending orders before checking balance and creating new orders
 	if err := retryPendingOrders(); err != nil {
@@ -48,7 +25,7 @@ func checkBalanceandCreateOrders() error {
 	}
 
 	if !canCreateOrders {
-		log.Println("ERROR: Orders cannot be created at this time. Please check your account balance and existing orders.")
+		log.Println("There are insufficient funds or existing orders to create new ones.")
 		return nil
 	}
 
@@ -63,7 +40,7 @@ func checkBalanceandCreateOrders() error {
 	}
 
 	if amount <= 0 {
-		log.Println("ERROR: Insufficient funds to create orders.")
+		log.Println("There are insufficient funds to create orders.")
 		return nil
 
 	}
