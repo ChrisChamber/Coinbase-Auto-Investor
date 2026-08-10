@@ -204,6 +204,7 @@ func canCreatenewBatchOrders() (bool, error) {
 	// Only create new batch orders if all previous orders are filled
 	for _, order := range orders {
 		if order.Status != "FILLED" {
+			log.Printf("All orders are not filled yet.")
 			return false, nil
 		}
 	}
