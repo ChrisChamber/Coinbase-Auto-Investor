@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"net/http"
-	"strconv"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 type CreateOrderRequest struct {
@@ -69,17 +69,17 @@ func getCoinbaseAccounts() (*Account, *Account, error) {
 	return fiat, crypto, nil
 }
 
-func calculateOrderSize(fiat *Account) (float64, error) {
+func calculateOrderSize(fiat *Account) (decimal.Decimal, error) {
 	// Dividing available balance by 10 and rounding down to 2 decimal places for the order size
-	fiatBalance, err := strconv.ParseFloat(fiat.AvailableBalance.Value, 64)
+	fiatBalance, err := decimal.NewFromString(fiat.AvailableBalance.Value)
 	if err != nil {
-		log.Fatalf("ERROR: error parsing fiat balance: %v", err)
+		return decimal.Zero, fmt.Errorf("ERROR: error parsing fiat balance: %v", err)
 	}
-	usableBalance := fiatBalance * 0.97             // keep 3% buffer for fees/slippage/reserved funds
-	put := math.Floor((usableBalance/10)*100) / 100 // round down to 2 decimal places
-	log.Printf("Calculated order size: %.2f %s", put, fiat.Currency)
-
-	return put, nil
+	usableBalance := fiatBalance.Mul(decimal.NewFromFloat(0.97)) // keep 3% buffer for fees/slippage/reserved funds
+	orderSize := usableBalance.Div(decimal.NewFromInt(10))       // divide by 10 to create 10 orders
+	log.Printf("Calculated order size: %.2f %s", orderSize, fiat.Currency)
+	// round down to 2 decimal places
+	return orderSize.Truncate(2), nil
 }
 
 func createOrder(order CreateOrderRequest) (orderResponse, error) {
@@ -111,20 +111,31 @@ func createOrder(order CreateOrderRequest) (orderResponse, error) {
 	}
 }
 
-func createBatchOrders(fiat, crypto *Account, amount float64) error {
+func createBatchOrders(fiat, crypto *Account, amount decimal.Decimal) error {
 	currentBuyPrice, err := getBuyPrice(fmt.Sprintf("%s-%s", crypto.Currency, fiat.Currency))
 	if err != nil {
 		log.Fatalf("ERROR: error getting buy price: %v", err)
 	}
-	discounts := []float64{0, 0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.045}
+	discounts := []decimal.Decimal{
+		decimal.NewFromFloat(0),
+		decimal.NewFromFloat(0.005),
+		decimal.NewFromFloat(0.01),
+		decimal.NewFromFloat(0.015),
+		decimal.NewFromFloat(0.02),
+		decimal.NewFromFloat(0.025),
+		decimal.NewFromFloat(0.03),
+		decimal.NewFromFloat(0.035),
+		decimal.NewFromFloat(0.04),
+		decimal.NewFromFloat(0.045)}
+
 	storedOrders, err := loadStoredOrders()
 	if err != nil {
 		log.Fatalf("ERROR: error loading stored orders: %v", err)
 	}
 	for i, discount := range discounts {
 		// putting in 10 orders at a time, each with the same size, but the buy price will decrease by a percentage with each order
-		limitPrice := currentBuyPrice * (1 - discount)
-		baseSize := amount / limitPrice
+		limitPrice := currentBuyPrice.Mul(decimal.NewFromInt(1).Sub(discount))
+		baseSize := amount.Div(limitPrice)
 		clientOrderID := fmt.Sprintf("order_%d_%d", time.Now().UnixNano(), i)
 
 		// Building order request before calling coinbase API to create the order
@@ -134,8 +145,8 @@ func createBatchOrders(fiat, crypto *Account, amount float64) error {
 			ProductID:     fmt.Sprintf("%s-%s", crypto.Currency, fiat.Currency),
 			Side:          "BUY",
 			Status:        "PENDING_SUBMISSION",
-			BaseSize:      fmt.Sprintf("%.8f", baseSize),
-			LimitPrice:    fmt.Sprintf("%.2f", limitPrice),
+			BaseSize:      baseSize.StringFixed(8),
+			LimitPrice:    limitPrice.StringFixed(2),
 		}
 		storedOrders = append(storedOrders, storedOrder)
 

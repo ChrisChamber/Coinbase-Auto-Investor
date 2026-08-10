@@ -3,8 +3,9 @@ package main
 import (
 	"log"
 	"os"
-	"strconv"
 	"time"
+
+	"github.com/shopspring/decimal"
 )
 
 func mustGetEnv(name string) string {
@@ -20,6 +21,7 @@ func checkBalanceandCreateOrders() error {
 	if err := retryPendingOrders(); err != nil {
 		log.Fatalf("ERROR: recovering pending orders: %v", err)
 	}
+
 	canCreateOrders, err := canCreatenewBatchOrders()
 	if err != nil {
 		log.Printf("ERROR: checking if orders can be created: %v", err)
@@ -34,17 +36,20 @@ func checkBalanceandCreateOrders() error {
 	if err != nil {
 		log.Fatalf("ERROR: getting coinbase accounts: %v", err)
 	}
+
+	fiatBalance, err := decimal.NewFromString(fiat.AvailableBalance.Value)
+	if err != nil {
+		log.Printf("ERROR: invalid fiat balance: %v", err)
+		return nil
+	}
 	// Checking if fiat balance meets the minimum required amount to create orders
-	fiatBalance, err := strconv.ParseFloat(fiat.AvailableBalance.Value, 64)
+	minFiatBalance, err := decimal.NewFromString(mustGetEnv("MIN_FIAT_BALANCE"))
 	if err != nil {
-		log.Fatalf("ERROR: parsing fiat balance: %v", err)
+		log.Printf("ERROR: invalid minimum fiat balance: %v", err)
+		return nil
 	}
-	minFiatBalance, err := strconv.ParseFloat(mustGetEnv("MIN_FIAT_BALANCE"), 64)
-	if err != nil {
-		log.Fatalf("ERROR: parsing minimum fiat balance: %v", err)
-	}
-	if fiatBalance < minFiatBalance {
-		log.Printf("Available fiat balance is below the minimum required amount of %s. Current balance: %f", mustGetEnv("MIN_FIAT_BALANCE"), fiatBalance)
+	if fiatBalance.Cmp(minFiatBalance) < 0 {
+		log.Printf("Available fiat balance is below the minimum required amount of %s. Current balance: %s", mustGetEnv("MIN_FIAT_BALANCE"), fiatBalance)
 		return nil
 	}
 
@@ -53,7 +58,7 @@ func checkBalanceandCreateOrders() error {
 		log.Fatalf("ERROR: calculating order size: %v", err)
 	}
 
-	if amount <= 0 {
+	if amount.Cmp(minFiatBalance) < 0 {
 		log.Println("There are insufficient funds to create orders.")
 		return nil
 
@@ -101,7 +106,7 @@ func runLoop() {
 }
 
 func main() {
-	// append to file instead of truncating, create file if does not exist, open for writing only, give read/write permissions to owner, read permissions to group and others
+	// append to logfile instead of truncating, create logfile if does not exist, open for writing only, give read/write permissions to owner, read permissions to group and others
 	f, err := os.OpenFile("CBAutoInvestor.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)

@@ -124,7 +124,6 @@ func refreshStoredOrders() error {
 	return saveStoredOrders(orders)
 }
 
-// TODO: Add a function to check if all orders are filled and return a boolean value.
 func checkIfAllOrdersFilled() (bool, error) {
 	if err := refreshStoredOrders(); err != nil {
 		return false, err
@@ -134,7 +133,7 @@ func checkIfAllOrdersFilled() (bool, error) {
 		return false, err
 	}
 
-	// No orders does not mean all orders are filled, it means there are no orders to check
+	// if there are no orders to check, then you don't know the status of the orders.
 	if len(orders) == 0 {
 		return false, nil
 	}
