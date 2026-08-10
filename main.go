@@ -76,10 +76,6 @@ func checkBalanceandCreateOrders() error {
 }
 
 func runLoop() {
-	// Check and retry pending orders on startup
-	if err := retryPendingOrders(); err != nil {
-		log.Fatalf("ERROR: recovering pending orders: %v", err)
-	}
 	// Check balance and create orders immediately on startup
 	if err := checkBalanceandCreateOrders(); err != nil {
 		log.Fatalf("ERROR: checking balance and creating orders: %v", err)
