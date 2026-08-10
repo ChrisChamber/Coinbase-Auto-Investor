@@ -11,8 +11,8 @@ import (
 )
 
 func sendNotification(title, message string) error {
-	token := getPushoverToken()
-	user := getPushoverUser()
+	token := mustGetEnv("PUSHOVER_TOKEN")
+	user := mustGetEnv("PUSHOVER_USER")
 
 	if token == "" || user == "" {
 		log.Printf("ERROR: Pushover token or user key is not set. Skipping notification.")
