@@ -145,6 +145,35 @@ func checkIfAllOrdersFilled() (bool, error) {
 	return true, nil
 }
 
+func retryPendingOrders() error {
+	storedOrders, err := loadStoredOrders()
+	if err != nil {
+		return fmt.Errorf("load stored orders: %w", err)
+	}
+
+	for _, order := range storedOrders {
+		if order.Status == "PENDING_SUBMISSION" {
+			// Retry creating the order
+			_, err := createOrder(CreateOrderRequest{
+				ClientOrderID: order.ClientOrderID,
+				ProductID:     order.ProductID,
+				Side:          order.Side,
+				OrderConfiguration: OrderConfiguration{
+					LimitLimitGTC: LimitLimitGTC{
+						BaseSize:   order.BaseSize,
+						LimitPrice: order.LimitPrice,
+						PostOnly:   false,
+					},
+				},
+			})
+			if err != nil {
+				log.Printf("ERROR: Failed to retry order %s: %v", order.ClientOrderID, err)
+			}
+		}
+	}
+	return nil
+}
+
 func canCreatenewBatchOrders() (bool, error) {
 	// an order could already be filled at Coinbase while its saved JSON still says OPEN
 	if err := refreshStoredOrders(); err != nil {
