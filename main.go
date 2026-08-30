@@ -58,12 +58,6 @@ func checkBalanceandCreateOrders() error {
 		log.Fatalf("ERROR: calculating order size: %v", err)
 	}
 
-	if amount.Cmp(minFiatBalance) < 0 {
-		log.Println("There are insufficient funds to create orders.")
-		return nil
-
-	}
-
 	if err := createBatchOrders(fiat, crypto, amount); err != nil {
 		log.Fatalf("ERROR: creating batch orders: %v", err)
 	}

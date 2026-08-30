@@ -11,11 +11,12 @@ import (
 )
 
 type StoredOrder struct {
-	OrderID       string `json:"order_id"`
-	ClientOrderID string `json:"client_order_id"`
-	ProductID     string `json:"product_id"`
-	Side          string `json:"side"`
-	Status        string `json:"status"`
+	OrderID            string `json:"order_id"`
+	ClientOrderID      string `json:"client_order_id"`
+	ProductID          string `json:"product_id"`
+	Side               string `json:"side"`
+	Status             string `json:"status"`
+	CompletionNotified bool   `json:"completion_notified"`
 
 	//add field with base size and limit price to be able to recreate the order if it fails
 	BaseSize   string `json:"base_size"`
@@ -142,7 +143,26 @@ func checkIfAllOrdersFilled() (bool, error) {
 			return false, nil
 		}
 	}
-	return true, nil
+
+	// Only report completion while this batch still needs a notification.
+	for _, order := range orders {
+		if !order.CompletionNotified {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func markAllOrdersCompletionNotified() error {
+	orders, err := loadStoredOrders()
+	if err != nil {
+		return err
+	}
+
+	for i := range orders {
+		orders[i].CompletionNotified = true
+	}
+	return saveStoredOrders(orders)
 }
 
 func retryPendingOrders() error {
