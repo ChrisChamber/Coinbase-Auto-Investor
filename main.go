@@ -93,6 +93,10 @@ func runLoop() {
 				log.Println("All orders are filled. Proceed with sending to wallet.")
 				if err := sendNotification("Orders Filled", "All orders are filled successfully. Proceed with transfer."); err != nil {
 					log.Printf("ERROR: sending notification: %v", err)
+					continue
+				}
+				if err := markAllOrdersCompletionNotified(); err != nil {
+					log.Printf("ERROR: saving completion notification state: %v", err)
 				}
 			}
 		}
