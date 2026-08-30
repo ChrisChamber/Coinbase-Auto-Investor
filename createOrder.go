@@ -46,7 +46,7 @@ type orderResponse struct {
 }
 
 func getCoinbaseAccounts() (*Account, *Account, error) {
-	accounts, fiat, crypto, err := getAccounts("EUR", "BTC")
+	accounts, fiat, crypto, err := getAccounts(mustGetEnv("FIAT_CURRENCY"), mustGetEnv("CRYPTO_CURRENCY"))
 	if err != nil {
 		log.Fatalf("error getting accounts: %v", err)
 	}
